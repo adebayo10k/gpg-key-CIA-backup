@@ -1,0 +1,5 @@
+{
+	"synchronisedHostDir" : "/home/user/Documents/a-syncd-or/backed-up-directory/",
+	"defaultPublicKeyringDir" : "/home/user/.gnupg/",
+	"defaultRevCertDir" : "/home/user/.gnupg/openpgp-revocs.d"
+}
