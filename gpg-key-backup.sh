@@ -2,110 +2,56 @@
 #: Title		:key-generator-and-manager.sh
 #: Date			:2019-11-15
 #: Author		:adebayo10k
-#: Version		:1.0
-#: Description	:script provides gpg encryption services to the command-line user 
+#: Version		:
+#: Description	:Script provides gpg encryption services to the command-line user 
 #: Description	: 
-#: Description	:to generate new encryption keys and revocation certs, then automatically
-#: Description	:to backup configurations, revocation certs and keys in appropriate ways
-#: Description	:integrate with existing system of backup, synchronisation and encryption 
-#: Description	:ssh into remotes to backup their keys too
+#: Description	:To generate new encryption keys and revocation certs, then to automatically
+#: Description	:backup configurations, revocation certs and keys in appropriate ways.
+#: Description	:Integrate with existing system of backup, synchronisation and encryption.
+#: Description	:SSH into remotes to backup their keys too.
 #: Options		:
 ##
 
+## THIS STUFF IS HAPPENING BEFORE MAIN FUNCTION CALL:
 
-##################################################################
-##################################################################
-# THIS STUFF IS HAPPENING BEFORE MAIN FUNCTION CALL:
-#===================================
+command_fullpath="$(readlink -f $0)" 
+command_basename="$(basename $command_fullpath)"
+command_dirname="$(dirname $command_fullpath)"
 
-# 1. MAKE SHARED LIBRARY FUNCTIONS AVAILABLE HERE
-
-# make all the shared library functions available to this script
-shared_bash_functions_fullpath="${SHARED_LIBRARIES_DIR}/shared-bash-functions.inc.sh"
-shared_bash_constants_fullpath="${SHARED_LIBRARIES_DIR}/shared-bash-constants.inc.sh"
-
-for resource in "$shared_bash_functions_fullpath" "$shared_bash_constants_fullpath"
+for file in "${command_dirname}/includes"/*
 do
-	if [ -f "$resource" ]
-	then
-		echo "Required library resource FOUND OK at:"
-		echo "$resource"
-		source "$resource"
-	else
-		echo "Could not find the required resource at:"
-		echo "$resource"
-		echo "Check that location. Nothing to do now, except exit."
-		exit 1
-	fi
+	source "$file"
 done
 
+## THAT STUFF JUST HAPPENED (EXECUTED) BEFORE MAIN FUNCTION CALL!
 
-# 2. MAKE SCRIPT-SPECIFIC FUNCTIONS AVAILABLE HERE
-
-# must resolve canonical_fullpath here, in order to be able to include sourced functions BEFORE we call main, and outside of any other functions, of course.
-
-# at runtime, command_fullpath may be either a symlink file or actual target source file
-command_fullpath="$0"
-command_dirname="$(dirname $0)"
-command_basename="$(basename $0)"
-
-# if a symlink file, then we need a reference to the canonical file name, as that's the location where all our required source files will be.
-# we'll test whether a symlink, then use readlink -f or realpath -e although those commands return canonical file whether symlink or not.
-# 
-canonical_fullpath="$(readlink -f $command_fullpath)"
-
-if [ -h "$command_fullpath" ]
-then
-	echo "is symlink"
-	echo "canonical_fullpath : $canonical_fullpath"
-else
-	echo "is canonical"
-	echo "canonical_fullpath : $canonical_fullpath"
-fi
-
-# included source files for json profile import functions
-source "$(dirname $canonical_fullpath)/gpg-key-backup-profile-build.inc.sh"
-
-
-# THAT STUFF JUST HAPPENED (EXECUTED) BEFORE MAIN FUNCTION CALL!
-##################################################################
-##################################################################
-
-
-function main
-{	
-	#######################################################################
+function main(){
+	##############################
 	# GLOBAL VARIABLE DECLARATIONS:
-	#######################################################################
+	##############################
+	program_title="gpg key backup"
+	original_author="damola adebayo"
+	program_dependencies=("jq" "gpg")
 
-	actual_host=$(hostname)
-	unset authorised_host_list
-	declare -a authorised_host_list=($HOST_0065 $HOST_0054 $HOST_R001 $HOST_R002)  # allow | deny
-	if [[ $(declare -a | grep 'authorised_host_list' 2>/dev/null) ]]
-	then
-		entry_test
-	fi
-	
 	declare -i max_expected_no_of_program_parameters=0
 	declare -i min_expected_no_of_program_parameters=0
 	declare -ir actual_no_of_program_parameters=$#
 	all_the_parameters_string="$@"
 
-	config_file_fullpath="${HOME}/.config/gpg-key-backup-config.json" # a full path to a file
+	declare -a authorised_host_list=()
+	actual_host=`hostname`
 
-	program_title=""
-	original_author=""
-	program_dependencies=(jq cowsay vi file-encrypter.sh gpg)
+	config_file_fullpath="${HOME}/.config/config10k/gpg-key-backup-config.json" # a full path to a file
 
 	test_line="" # global...
 
 	declare -a file_fullpaths_to_encrypt=()
 
-	################################################
+	##############################
 
 	armor_option='--armor'
 
-	################################################
+	##############################
 
 	gpg_command='gpg'
 	output_option='--output'
@@ -125,35 +71,43 @@ function main
 	rev_certs_moved_OK=
 	public_key_export_OK=
 
-	##################################################	
+	################################	
 	
-	###############################################################################################
-	# 'SHOW STOPPER' CHECKING FUNCTION CALLS:	
-	###############################################################################################
-
-	# check program dependencies and requirements
-	check_program_requirements "${program_dependencies[@]}"
+	##############################
+	# FUNCTION CALLS:
+	##############################
+	if [ ! $USER = 'root' ]
+	then
+		## Display a program header
+		lib10k_display_program_header "$program_title" "$original_author"
+		## check program dependencies and requirements
+		lib10k_check_program_requirements "${program_dependencies[@]}"
+	fi
 	
-	# verify number of program positional parameters
-	check_no_of_program_args
+	# check the number of parameters to this program
+	lib10k_check_no_of_program_args
 
-	###############################################################################################
+	# controls where this program can be run, to avoid unforseen behaviour
+	lib10k_entry_test
+
+
+	##############################
 	# $SHLVL DEPENDENT FUNCTION CALLS:	
-	###############################################################################################
+	##############################
 	# using $SHLVL to show whether this script was called from another script, or from command line
 	if [ $SHLVL -le 2 ]
 	then
 		# Display a descriptive and informational program header:
-		display_program_header
+		lib10k_display_program_header
 
 		# give user option to leave if here in error:
-		get_user_permission_to_proceed
+		lib10k_get_user_permission_to_proceed
 	fi
 
 
-	###############################################################################################
+	##############################
 	# FUNCTIONS CALLED ONLY IF THIS PROGRAM USES A CONFIGURATION FILE:	
-	###############################################################################################
+	##############################
 
 	if [ -n "$config_file_fullpath" ]
 	then
@@ -162,9 +116,9 @@ function main
 
 	#exit 0 #debug
 
-	###############################################################################################
+	##############################
 	# PROGRAM-SPECIFIC FUNCTION CALLS:	
-	###############################################################################################
+	##############################
 
 	# IMPORT CONFIGURATION INTO PROGRAM VARIABLES
 	import_key_management_configuration
@@ -187,9 +141,9 @@ function main
 
 
 
-###############################################################################################
+##############################
 ####  FUNCTION DECLARATIONS  
-###############################################################################################
+##############################
 
 function create_all_synchronised_dirs()
 {
@@ -203,7 +157,7 @@ function create_all_synchronised_dirs()
 	# temporary rmdir during development, just until all directory creations confirmed working
 	#rm -R "$synchronised_dir_fullpath"
 
-	test_dir_path_access "$synchronised_dir_fullpath"
+	lib10k_test_dir_path_access "$synchronised_dir_fullpath"
 	return_code=$?
 	if [ $return_code -eq 0 ]
 	then
@@ -232,7 +186,7 @@ function create_all_synchronised_dirs()
 
 	for subdir in ${synchronised_subdirs[@]}
 	do
-		test_dir_path_access "$subdir"
+		lib10k_test_dir_path_access "$subdir"
 		if [ $? -eq 0 ]
 		then
 			echo "subdir ALREADY EXISTS AND CAN BE ENTERED OK"
@@ -252,7 +206,7 @@ function create_all_synchronised_dirs()
 	done
 
 }
-####################################################################################################
+#################################
 #
 function import_key_management_configuration()
 {
@@ -272,7 +226,7 @@ function import_key_management_configuration()
 		# sanitise_absolute_path_value "${dir}"
 		# echo "testline: $test_line"
 
-		make_abs_pathname "${dir}"
+		lib10k_make_abs_pathname "${dir}"
 		echo "test_line has the value: $test_line"
 		
 		case $dir in
@@ -295,7 +249,7 @@ function import_key_management_configuration()
 	for dir in "$synchronised_location_holding_dir_fullpath" "$public_keyring_default_directory_fullpath"
 	do
 		# this valid form test works for sanitised directory paths too
-		test_file_path_valid_form "$dir"
+		lib10k_test_file_path_valid_form "$dir"
 		return_code=$?
 		if [ $return_code -eq 0 ]
 		then
@@ -306,7 +260,7 @@ function import_key_management_configuration()
 		fi	
 
 		# if the above test returns ok, ...
-		test_dir_path_access "$dir"
+		lib10k_test_dir_path_access "$dir"
 		return_code=$?
 		if [ $return_code -eq 0 ]
 		then
@@ -331,7 +285,7 @@ function import_key_management_configuration()
 
 }
 
-###############################################################################
+##############################
 
 # returns 
 function export_public_keys
@@ -361,7 +315,7 @@ function export_public_keys
 
 	echo "public_key_export_OK was set to: $public_key_export_OK"
 }
-##########################################################################################################
+#######################################
 # returns 
 function rename_and_move_revocation_certificates
 {
@@ -389,7 +343,7 @@ function rename_and_move_revocation_certificates
 
 	echo "rev_certs_moved_OK was set to: $rev_certs_moved_OK"
 }
-##########################################################################################################
+#######################################
 # WE KNOW THAT REVOCATION CERTS AND PRIVATE KEYS SHOULD NEVER EXIST ON THE SAME HOST, BUT WHILE REV CERTS DO \
 # + EXIST ON OUR SYSTEM, WE'LL USE ENCRYPTION AND SHREDDING TO ACHEIVE CONFIDENTIALITY AND INTEGRITY
 # gpg encrypt both user-generated and pre-generated revocation certs in the GnuPG default location	
@@ -447,7 +401,7 @@ function encrypt_revocation_certificates
 	# the command argument is deliberately unquoted, so the default space character IFS DOES separate\
 	# the string into arguments
 	# we can use ANY available private key for this, not just the newly generated one! tell the user!
-	file-encrypter.sh $string_to_send
+	"${command_dirname}/gpg-file-encrypt.sh" $string_to_send
 
 	encrypt_result=$?
 	if [ $encrypt_result -eq 0 ]
@@ -463,7 +417,7 @@ function encrypt_revocation_certificates
 
 	echo "rev_cert_encrypt_OK was set to: $rev_cert_encrypt_OK"
 }
-##########################################################################################################
+#######################################
 # returns 
 function generate_revocation_certificate
 {
@@ -494,7 +448,7 @@ function generate_revocation_certificate
 
 	echo "new_key_rev_cert_OK was set to: $new_key_rev_cert_OK"
 }
-##########################################################################################################
+#######################################
 # nothing returned, as no other function depends on the outcome of this task. just print messages.
 function backup_public_keyrings
 {
@@ -505,7 +459,7 @@ function backup_public_keyrings
 	do
 
 		# copy old public keyring (each format) from synchronised location to archive location
-		test_file_path_access "${synchronised_dir_fullpath}/${pubkeyring}"
+		lib10k_test_file_path_access "${synchronised_dir_fullpath}/${pubkeyring}"
 		if [ $? -eq 0 ]
 		then
 			echo && echo "AN EXISTING \"${pubkeyring}\" PUBLIC KEYRING WAS FOUND IN THE SYNC'D LOCATION"
@@ -518,7 +472,7 @@ function backup_public_keyrings
 		fi
 
 		# copy new public keyring (each format) from default location to synchronised location
-		test_file_path_access "$public_keyring_default_directory_fullpath/${pubkeyring}"
+		lib10k_test_file_path_access "$public_keyring_default_directory_fullpath/${pubkeyring}"
 		if [ $? -eq 0 ]
 		then
 			echo && echo "A NEW \"${pubkeyring}\" PUBLIC KEYRING WAS FOUND IN THE GnuPG DEFAULT LOCATION"
@@ -535,7 +489,7 @@ function backup_public_keyrings
 	echo && echo "LEAVING FROM FUNCTION ${FUNCNAME[0]}" && echo
 
 }
-##########################################################################################################
+#######################################
 # set the value of the new_keygen_OK global
 function generate_public_keypair
 {
@@ -568,7 +522,7 @@ function generate_public_keypair
 
 	echo "new_keygen_OK was set to: $new_keygen_OK"
 }
-##########################################################################################################
+#######################################
 # returns zero if user-id (or substring of it) already used in public keyring
 function test_uid_in_pub_keyring
 {
@@ -586,7 +540,7 @@ function test_uid_in_pub_keyring
 
 	return "$test_result"
 }
-##########################################################################################################
+#######################################
 # returns zero if 
 function test_email_valid_form
 {
@@ -612,7 +566,7 @@ function test_email_valid_form
 
 	return "$test_result"
 }
-###############################################################################################
+##############################
 function set_working_user_id
 {
 	echo && echo "ENTERED INTO FUNCTION ${FUNCNAME[0]}" && echo
@@ -664,7 +618,7 @@ function set_working_user_id
 	echo && echo "LEAVING FROM FUNCTION ${FUNCNAME[0]}" && echo
 }
 
-###############################################################################################
+##############################
 # the act of generating a new key-pair also triggers its' automatic backup, rev. cert generation
 # and encryption etc.
 function generate_and_manage_keys
@@ -822,6 +776,6 @@ function generate_and_manage_keys
 	echo && echo "LEAVING FROM FUNCTION ${FUNCNAME[0]}" && echo
 }
 
-#########################################################################################################
+######################################
 
 main "$@"; exit

@@ -4,7 +4,7 @@
 
 function get_config_values_for_all_dirs () 
 {
-	config_file_fullpath="${HOME}/.config/gpg-key-backup-config.json" # a full path to a file
+	config_file_fullpath="${HOME}/.config/config10k/gpg-key-backup-config.json" # a full path to a file
 
 	echo "config_file_fullpath set to $config_file_fullpath"
 
