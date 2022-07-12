@@ -18,10 +18,20 @@ command_fullpath="$(readlink -f $0)"
 command_basename="$(basename $command_fullpath)"
 command_dirname="$(dirname $command_fullpath)"
 
-for file in "${command_dirname}/shared-functions-library"/shared-bash-*
-do
-	source "$file"
-done
+if [ -d "${command_dirname}/shared-functions-library1" ]
+then
+	echo "LIB FILES FOUND OK"
+	for file in "${command_dirname}/shared-functions-library"/shared-bash-*
+	do
+		source "$file"
+	done
+else
+	# native exit
+	echo "Program requires \"${command_dirname}/shared-functions-library\"."
+	echo "Required file not found. Returning exit code 1. Exiting now..."
+	exit 1
+fi
+exit 0
 
 ## THAT STUFF JUST HAPPENED (EXECUTED) BEFORE MAIN FUNCTION CALL!
 
@@ -401,7 +411,7 @@ function encrypt_revocation_certificates
 	# the command argument is deliberately unquoted, so the default space character IFS DOES separate\
 	# the string into arguments
 	# we can use ANY available private key for this, not just the newly generated one! tell the user!
-	"${command_dirname}/gpg-file-encrypt.sh" $string_to_send
+	"${command_dirname}/gpg-json-encryption-profiles/gpg-file-encrypt.sh" $string_to_send
 
 	encrypt_result=$?
 	if [ $encrypt_result -eq 0 ]
