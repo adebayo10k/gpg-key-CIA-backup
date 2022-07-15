@@ -50,8 +50,10 @@ function main(){
 
 	declare -a authorised_host_list=()
 	actual_host=`hostname`
-
-	config_file_fullpath="${HOME}/.config/config10k/gpg-key-backup-config.json" # a full path to a file
+	
+	# a full path to a file
+	# user needs to edit and copy configuration file to this location
+	config_file_fullpath="${HOME}/.config/config10k/gpg-key-backup-config.json" 
 
 	test_line="" # global...
 
@@ -92,6 +94,8 @@ function main(){
 		lib10k_display_program_header "$program_title" "$original_author"
 		## check program dependencies and requirements
 		lib10k_check_program_requirements "${program_dependencies[@]}"
+		# give user option to leave if here in error:
+		lib10k_get_user_permission_to_proceed
 	fi
 	
 	# check the number of parameters to this program
@@ -100,31 +104,12 @@ function main(){
 	# controls where this program can be run, to avoid unforseen behaviour
 	lib10k_entry_test
 
-
-	##############################
-	# $SHLVL DEPENDENT FUNCTION CALLS:	
-	##############################
-	# using $SHLVL to show whether this script was called from another script, or from command line
-	if [ $SHLVL -le 2 ]
-	then
-		# Display a descriptive and informational program header:
-		lib10k_display_program_header
-
-		# give user option to leave if here in error:
-		lib10k_get_user_permission_to_proceed
-	fi
-
-
-	##############################
-	# FUNCTIONS CALLED ONLY IF THIS PROGRAM USES A CONFIGURATION FILE:	
-	##############################
-
+	# TODO: check access to, readability of, format of configuration file.
 	if [ -n "$config_file_fullpath" ]
 	then
 		:		
 	fi
 
-	#exit 0 #debug
 
 	##############################
 	# PROGRAM-SPECIFIC FUNCTION CALLS:	
