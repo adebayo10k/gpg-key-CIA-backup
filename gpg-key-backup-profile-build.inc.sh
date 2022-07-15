@@ -30,7 +30,9 @@ function get_config_values_for_all_dirs ()
 function get_and_assign_data()
 {	
 
-	syncd_host_dir_string=$(cat "$config_file_fullpath" | jq -r '.synchronisedHostDir') 
+	syncd_host_dir_string=$(cat "$config_file_fullpath" | \
+	jq -r '.synchronisedHostDir' \
+	)
 	echo "syncd_host_dir_string:"
 	echo -e "$syncd_host_dir_string"
 	echo && echo
@@ -39,7 +41,9 @@ function get_and_assign_data()
 	
 	###
 
-	pub_keyring_dir_string=$(cat "$config_file_fullpath" | jq -r '.defaultPublicKeyringDir') 
+	pub_keyring_dir_string=$(cat "$config_file_fullpath" | \
+	jq -r '.defaultPublicKeyringDir' \
+	) 
 	echo "pub_keyring_dir_string:"
 	echo -e "$pub_keyring_dir_string"
 	echo && echo
@@ -48,7 +52,9 @@ function get_and_assign_data()
 
 	###
 
-	rev_cert_dir_string=$(cat "$config_file_fullpath" | jq -r '.defaultRevCertDir') 
+	rev_cert_dir_string=$(cat "$config_file_fullpath" | \
+	jq -r '.defaultRevCertDir' \
+	) 
 	echo "rev_cert_dir_string:"
 	echo -e "$rev_cert_dir_string"
 	echo && echo
