@@ -95,7 +95,7 @@ function main(){
 		## check program dependencies and requirements
 		lib10k_check_program_requirements "${program_dependencies[@]}"
 		# give user option to leave if here in error:
-		lib10k_get_user_permission_to_proceed
+		lib10k_get_user_permission_to_proceed; [ $? -eq 0 ] || exit 0;
 	fi
 	
 	# check the number of parameters to this program
