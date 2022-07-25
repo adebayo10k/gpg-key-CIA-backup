@@ -396,7 +396,7 @@ function encrypt_revocation_certificates
 	# the command argument is deliberately unquoted, so the default space character IFS DOES separate\
 	# the string into arguments
 	# we can use ANY available private key for this, not just the newly generated one! tell the user!
-	"${command_dirname}/gpg-json-encryption-profiles/gpg-file-encrypt.sh" $string_to_send
+	"${command_dirname}/gpg-encryption-using-json-profiles/gpg-file-encrypt.sh" $string_to_send
 
 	encrypt_result=$?
 	if [ $encrypt_result -eq 0 ]
